@@ -1,8 +1,8 @@
 # tgrep.py
 # Author:       Colin Woodbury
 # Contact:      colingw@gmail.com
-# Start date:   02/17/2011 
-# End date:     02/21/2011 
+# Start date:   02/17/2011
+# End date:     02/21/2011
 # Description:  A customized version of grep that
 #               works specifically to locate and store
 #               entries in Reddit's large .log files.
@@ -48,13 +48,13 @@ class DataError(TgrepError):
 def get_args():
     """Safely gets the arguments passed on the
     command line and handles all associated errors.
-    Valid arguments are returned as a tuple 
+    Valid arguments are returned as a tuple
     in the form: (filename, time)
     """
     try:
         # Test for the presence/overpresence of command-line args.
         argQuant = len(sys.argv)
-        if argQuant == 1 or argQuant > 3:    
+        if argQuant == 1 or argQuant > 3:
             raise ArgumentError("Argument quantity incorrect.")
         else:
             # Check formatting. Were we given a time and a file?
@@ -85,10 +85,10 @@ def get_args():
                     raise ArgumentError("Bad/No time given.")
     except ArgumentError as error:
         # Rage at the user, then quit.
-        error.f7u12() 
+        error.f7u12()
         sys.exit(2)
     return (file, time)
-        
+
 def is_file(line):
     """Confirms if the file argument passed
     on the command line is, in fact, a file.
@@ -99,7 +99,7 @@ def is_file(line):
     else:
         result = False
     return result
-    
+
 def get_time(line):
     """Given a string, scans it using a regex,
     and parses a time of the format
@@ -107,7 +107,7 @@ def get_time(line):
     """
     regex = r"\b([01]?\d|2[0-3]):([0-5]\d)(:[0-5]\d)?\b"
     match = re.search(regex, line)
-    if match: 
+    if match:
         time = match.group()
     else:
         time = None
@@ -139,10 +139,10 @@ def is_valid_time(time):
                 elif each > "59":
                     validTime = False
     return validTime
-        
+
 def confirm_time(time):
     """Given the time argument taken from
-    the command line, parses it to determine 
+    the command line, parses it to determine
     what range of times the user wants to search.
     """
     if "-" not in time:  # We were not given a range.
@@ -155,7 +155,7 @@ def confirm_time(time):
     # Add seconds, if necessary.
     if len(start) == 5: #format: xx:xx
         start += ":00"
-    if len(end) == 5: 
+    if len(end) == 5:
         end += ":59"
     return (start, end)
 
@@ -198,8 +198,8 @@ def begin_file_oper(filename, start, end):
 def get_last_line(file):
     """Retrieves the last line of the file."""
     # Set the cursor at the end and get the line.
-    file.seek(0, 2)      
-    pos = file.tell() 
+    file.seek(0, 2)
+    pos = file.tell()
     lastLine = get_full_line(file, pos-1)  # Explodes without offset.
     return lastLine
 
@@ -218,7 +218,7 @@ def lseek(file, pos):
     lseekCalls += 1
     found = False
     jumpDist = 15  # Distance (bytes) to jump back by each time.
-    # Check for initial newline. 
+    # Check for initial newline.
     if newline_check(file, pos, jumpDist) != -1:
         # Jump back a bit to avoid problems.
         pos -= jumpDist
@@ -229,13 +229,13 @@ def lseek(file, pos):
             file.seek(0)
             found = True
         else:  # Seek n' read.
-            # Add a buffer in case original pos was the 
+            # Add a buffer in case original pos was the
             # start of the line.
             index = newline_check(file, pos, jumpDist + 1)
             if index != -1:  # Newline present.
                 pos += index + 1  # Byte right after the newline.
                 file.seek(pos)
-                found = True 
+                found = True
 
 def newline_check(file, pos, buff):
     """Reads 'buff' bytes from 'pos' onward in 'file'
@@ -256,7 +256,7 @@ def read(file, bytes):
     return line
 
 def confirm_data_set(file, start, end, firstTime, lastTime):
-    """Determines if the file given and 
+    """Determines if the file given and
     the times indicated will make a valid
     data set.
     """
@@ -265,7 +265,7 @@ def confirm_data_set(file, start, end, firstTime, lastTime):
     if start == firstTime and end == lastTime:
         line = "Time range given encompasses entire data set. Revise."
         raise DataError(line)
-            
+
 def get_lower_bound(file, start, firstTime, lastTime):
     """Uses a binary search on the file to find
     the tell() position of the first line to be read.
@@ -320,8 +320,8 @@ def circular_bin_search(file, time, firstTime, lastTime):
         elif time > midTime and time < upperTime:
             lower = mid
             lowerTime = midTime
-        else: 
-            # Standard binary search logic fails. 
+        else:
+            # Standard binary search logic fails.
             # Find what side the "day break" is on.
             # 'time' is always on the side of daybreak.
             if lowerTime > midTime:  # Day break on the left.
@@ -339,7 +339,7 @@ def circular_bin_search(file, time, firstTime, lastTime):
     return pos
 
 def to_seconds(time):
-    """Converts a time in the format xx:xx:xx to its 
+    """Converts a time in the format xx:xx:xx to its
     value in seconds.
     """
     return (int(time[0:2]) * 3600) + (int(time[3:5]) * 60) + int(time[6:])
@@ -351,7 +351,7 @@ def first_instance(file, start, pos):
     """
     file.seek(pos)
     while 1:
-        # Get the line before the current line. 
+        # Get the line before the current line.
         lseek(file, pos - 5)  # Arbitrary jump back distance. Must be > 1.
         currPos = file.tell()
         currLine = file.readline()
@@ -398,7 +398,7 @@ def main_output(file, start, end, pos, lastLine=""):
         line = file.readline()
     if lastLine:  # Possible roll-over.
         print(lastLine, end="")
-        
+
 #Some globals.
 readCalls = 0  #total number of calls to read()
 lseekCalls = 0 #total number of calls to lseek()
@@ -411,4 +411,3 @@ if __name__ == "__main__":
     # Test output.
     #print("Calls to lseek():", lseekCalls)
     #print("Calls to read():", readCalls)
-
